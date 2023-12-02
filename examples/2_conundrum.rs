@@ -27,7 +27,7 @@ fn parse_input(path: &str) -> Vec<Vec<(u32, u32, u32)>> {
     games
 }
 
-fn solve_1(games: &Vec<Vec<(u32, u32, u32)>>, max_red: u32, max_green: u32, max_blue: u32) -> u32 {
+fn solve_1(games: &[Vec<(u32, u32, u32)>], max_red: u32, max_green: u32, max_blue: u32) -> u32 {
     let mut res = 0;
     for (i, game) in games.iter().enumerate() {
         let mut id = i + 1;
@@ -65,12 +65,9 @@ fn solve_2(games: &Vec<Vec<(u32, u32, u32)>>) -> u32 {
 }
 
 fn main() {
-    // let input = read_input_1("data/1_trebuchet_example.txt");
-    // let sum = input.iter().sum::<u32>();
-    // println!("sum 1: {}", sum);
     let input = parse_input("data/2_input.txt");
     let res = solve_1(&input, 12, 13, 14);
     println!("res 1: {}", res);
     let res = solve_2(&input);
-    println!("res: {}", res);
+    println!("res 2: {}", res);
 }
