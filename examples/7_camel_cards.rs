@@ -1,5 +1,4 @@
 use std::char;
-use std::cmp::Ordering;
 use std::cmp::PartialOrd;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -98,18 +97,13 @@ impl From<&[Card; 5]> for HandType {
         }
 
         let mut max_count = 0;
-        let mut max_card = Card::Two;
         let mut second_max_count = 0;
-        let mut second_max_card = Card::Two;
-        for (card, count) in counts.iter() {
+        for count in counts.values() {
             if *count > max_count {
                 second_max_count = max_count;
-                second_max_card = max_card;
                 max_count = *count;
-                max_card = *card;
             } else if *count > second_max_count {
                 second_max_count = *count;
-                second_max_card = *card;
             }
         }
 
@@ -143,18 +137,13 @@ impl From<&[Card2; 5]> for HandType {
         let n_jokers = counts.remove(&Card2::Joker).unwrap_or(0);
 
         let mut max_count = 0;
-        let mut max_card = Card2::Two;
         let mut second_max_count = 0;
-        let mut second_max_card = Card2::Two;
-        for (card, count) in counts.iter() {
+        for count in counts.values() {
             if *count > max_count {
                 second_max_count = max_count;
-                second_max_card = max_card;
                 max_count = *count;
-                max_card = *card;
             } else if *count > second_max_count {
                 second_max_count = *count;
-                second_max_card = *card;
             }
         }
         // now consider jokers as the max card
@@ -190,8 +179,6 @@ impl FromStr for Hand {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut bid = 0;
-
         let parts = s.split(' ').collect::<Vec<_>>();
         assert_eq!(parts.len(), 2);
 
@@ -201,7 +188,7 @@ impl FromStr for Hand {
             cards[i] = chars[i].into();
         }
         let hand = HandType::from(&cards);
-        bid = parts[1].parse().expect("cannot parse bid");
+        let bid = parts[1].parse().expect("cannot parse bid");
 
         Ok(Self { cards, hand, bid })
     }
