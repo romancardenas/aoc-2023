@@ -67,10 +67,7 @@ fn exercise1(scenario: &Scenario) -> usize {
 }
 
 fn exercise2() -> usize {
-    let time = 71_530;
-    let max_distance = 940_200;
-
-    let time = 46_689_866;
+    let time = 46_689_866; // hard-coded from input_6.txt
     let max_distance = 358_105_418_071_080;
 
     let mut min_speed = 0;
