@@ -41,3 +41,7 @@ impl std::ops::Add for Point {
         }
     }
 }
+
+pub fn read_file(filename: &str) -> String {
+    std::fs::read_to_string(filename).unwrap()
+}

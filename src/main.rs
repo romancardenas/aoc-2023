@@ -1,137 +1,153 @@
-use std::ops::{Deref, DerefMut};
+use std::{collections::HashMap, fs};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Item {
-    Empty,
-    Galaxy,
+fn parse_input(path: &str) -> Vec<Vec<char>> {
+    let file = fs::read_to_string(path).expect("cannot read file");
+    file.lines().map(|line| line.chars().collect()).collect()
 }
 
-impl From<char> for Item {
-    fn from(c: char) -> Self {
-        match c {
-            '.' => Self::Empty,
-            '#' => Self::Galaxy,
-            _ => panic!("invalid char"),
-        }
-    }
-}
-
-impl std::fmt::Display for Item {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let c = match self {
-            Self::Empty => '.',
-            Self::Galaxy => '#',
-        };
-        write!(f, "{}", c)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Scenario(Vec<Vec<Item>>);
-
-impl std::fmt::Display for Scenario {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for line in self.0.iter() {
-            for pipe in line.iter() {
-                write!(f, "{}", pipe)?;
+fn tilt_north(input: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut res = input.to_vec();
+    let mut ceiling = HashMap::new();
+    for (i, line) in input.iter().enumerate() {
+        for (j, c) in line.iter().enumerate() {
+            if *c == 'O' {
+                let new_pos = match ceiling.get(&j) {
+                    Some(&pos) => pos + 1,
+                    None => 0,
+                };
+                res[i][j] = '.';
+                res[new_pos][j] = 'O';
+                ceiling.insert(j, new_pos);
+            } else if *c == '#' {
+                ceiling.insert(j, i);
             }
-            writeln!(f)?;
-        }
-        Ok(())
-    }
-}
-
-impl Deref for Scenario {
-    type Target = Vec<Vec<Item>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Scenario {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-fn parse_input(path: &str) -> Scenario {
-    let mut res = Vec::new();
-    let file = std::fs::read_to_string(path).expect("cannot read file");
-    for line in file.lines() {
-        let samples = line.chars().map(|s| s.into()).collect::<Vec<_>>();
-        res.push(samples);
-    }
-    Scenario(res)
-}
-
-fn expanded_space(scenario: &Scenario) -> (Vec<usize>, Vec<usize>) {
-    let (mut rows, mut cols) = (Vec::new(), Vec::new());
-
-    for (row, line) in scenario.iter().enumerate() {
-        if line.iter().all(|item| *item == Item::Empty) {
-            rows.push(row);
-        }
-    }
-    let mut j = 0;
-    while j < scenario[0].len() {
-        if scenario.iter().all(|line| line[j] == Item::Empty) {
-            cols.push(j);
-        }
-        j += 1;
-    }
-
-    (rows, cols)
-}
-
-fn exercise1(
-    scenario: &Scenario,
-    expanded_rows: &[usize],
-    expanded_cols: &[usize],
-    expansion: usize,
-) -> usize {
-    // find all galaxies
-    let mut galaxies = Vec::new();
-    for (row, line) in scenario.iter().enumerate() {
-        for (col, item) in line.iter().enumerate() {
-            if *item == Item::Galaxy {
-                galaxies.push((row, col));
-            }
-        }
-    }
-
-    let mut res = 0;
-    for (n, g1) in galaxies.iter().enumerate() {
-        for g2 in galaxies.iter().skip(n + 1) {
-            let (min_row, max_row) = (g1.0.min(g2.0), g1.0.max(g2.0));
-            let (min_col, max_col) = (g1.1.min(g2.1), g1.1.max(g2.1));
-
-            let mut distance = max_row - min_row + max_col - min_col;
-            for expanded_row in expanded_rows.iter() {
-                if (min_row..=max_row).contains(expanded_row) {
-                    distance += expansion - 1;
-                }
-            }
-            for expanded_col in expanded_cols.iter() {
-                if (min_col..=max_col).contains(expanded_col) {
-                    distance += expansion - 1;
-                }
-            }
-            res += distance;
         }
     }
     res
 }
 
+fn tilt_west(input: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut res = input.to_vec();
+    let mut ceiling = HashMap::new();
+    for (i, line) in input.iter().enumerate() {
+        for (j, c) in line.iter().enumerate() {
+            if *c == 'O' {
+                let new_pos = match ceiling.get(&i) {
+                    Some(&pos) => pos + 1,
+                    None => 0,
+                };
+                res[i][j] = '.';
+                res[i][new_pos] = 'O';
+                ceiling.insert(i, new_pos);
+            } else if *c == '#' {
+                ceiling.insert(i, j);
+            }
+        }
+    }
+    res
+}
+
+fn tilt_south(input: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut res = input.to_vec();
+    let mut ceiling = HashMap::new();
+    let n_rows: usize = input.len();
+    for (i, line) in input.iter().enumerate().rev() {
+        for (j, c) in line.iter().enumerate() {
+            if *c == 'O' {
+                let new_pos = match ceiling.get(&j) {
+                    Some(&pos) => pos - 1,
+                    None => n_rows - 1,
+                };
+                res[i][j] = '.';
+                res[new_pos][j] = 'O';
+                ceiling.insert(j, new_pos);
+            } else if *c == '#' {
+                ceiling.insert(j, i);
+            }
+        }
+    }
+    res
+}
+
+fn tilt_east(input: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut res = input.to_vec();
+    let mut ceiling = HashMap::new();
+    let n_cols: usize = input[0].len();
+    for (i, line) in input.iter().enumerate() {
+        for (j, c) in line.iter().enumerate().rev() {
+            if *c == 'O' {
+                let new_pos = match ceiling.get(&i) {
+                    Some(&pos) => pos - 1,
+                    None => n_cols - 1,
+                };
+                res[i][j] = '.';
+                res[i][new_pos] = 'O';
+                ceiling.insert(i, new_pos);
+            } else if *c == '#' {
+                ceiling.insert(i, j);
+            }
+        }
+    }
+    res
+}
+
+fn tilt(input: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut res = tilt_north(input);
+    res = tilt_west(&res);
+    res = tilt_south(&res);
+    tilt_east(&res)
+}
+
+fn exercise1(input: &[Vec<char>]) -> usize {
+    let mut res = 0;
+    let n_cols = input[0].len();
+    for (i, line) in input.iter().enumerate() {
+        for c in line {
+            if *c == 'O' {
+                res += n_cols - i;
+            }
+        }
+    }
+    res
+}
+
+fn exercise2(input: &[Vec<char>]) -> usize {
+    let mut scenario = input.to_vec();
+    let mut cache = HashMap::new();
+    let mut reverse_cache = HashMap::new();
+
+    let n_expected_shifts = 1000000000;
+
+    let mut n_shifts = 0;
+    loop {
+        if cache.contains_key(&scenario) {
+            println!("Cache hit!");
+            println!("    n_shifts: {}", n_shifts);
+            let last_n_shifts = cache.get(&scenario).unwrap();
+            println!("    last_n_shifts: {}", last_n_shifts);
+            let period = n_shifts - last_n_shifts;
+            println!("    period: {}", period);
+            let n_loops = (n_expected_shifts - n_shifts) / period;
+            println!("    n_loops: {}", n_loops);
+
+            let n_shifts_extra = (n_expected_shifts - n_shifts) % period;
+            println!("    n_shifts_extra: {}", n_shifts_extra);
+            n_shifts = last_n_shifts + n_shifts_extra;
+            break;
+        } else {
+            cache.insert(scenario.clone(), n_shifts);
+            reverse_cache.insert(n_shifts, scenario.clone());
+            scenario = tilt(&scenario);
+            n_shifts += 1;
+        }
+    }
+    exercise1(reverse_cache.get(&n_shifts).unwrap())
+}
+
 fn main() {
-    let scenario = parse_input("data/11_input.txt");
-    let (expanded_rows, expanded_cols) = expanded_space(&scenario);
-    println!(
-        "exercise1: {}",
-        exercise1(&scenario, &expanded_rows, &expanded_cols, 2)
-    );
-    println!(
-        "exercise2: {}",
-        exercise1(&scenario, &expanded_rows, &expanded_cols, 1_000_000)
-    );
+    let input = parse_input("data/14_input.txt");
+    let res = tilt_north(&input);
+    println!("res1: {}", exercise1(&res));
+
+    println!("res2: {}", exercise2(&input));
 }
