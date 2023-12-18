@@ -76,8 +76,6 @@ fn exercise_2(input: &[Vec<char>]) -> usize {
     let n_rows = input.len() as i32;
     let n_cols = input[0].len() as i32;
     let mut best = 0;
-    let mut best_pos = (0, 0);
-    let mut best_dir = (0, 0);
 
     for i in 0..n_rows {
         let ex_1 = exercise_1(input, (i, 0), (0, 1));
@@ -85,9 +83,7 @@ fn exercise_2(input: &[Vec<char>]) -> usize {
         let ex = ex_1.max(ex_2);
         if ex > best {
             best = ex;
-            best_pos = (i, 0);
-            best_dir = (0, 1);
-            println!("starting at {:?} {:?}: {}", best_pos, best_dir, best)
+            println!("starting at {:?} {:?}: {}", (i, 0), (0, 1), best)
         }
     }
     for j in 0..n_cols {
@@ -96,9 +92,7 @@ fn exercise_2(input: &[Vec<char>]) -> usize {
         let ex = ex_1.max(ex_2);
         if ex > best {
             best = ex;
-            best_pos = (0, j);
-            best_dir = (1, 0);
-            println!("starting at {:?} {:?}: {}", best_pos, best_dir, best)
+            println!("starting at {:?} {:?}: {}", (0, j), (1, 0), best)
         }
     }
     best

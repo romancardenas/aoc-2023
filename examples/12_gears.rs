@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::fs;
 
 fn calculate_solutions(
-    characters: &Vec<char>,
-    integers: &Vec<u128>,
+    characters: &[char],
+    integers: &[u128],
     memoization: &mut HashMap<(Vec<u128>, Vec<char>), u128>,
 ) -> u128 {
     if characters.is_empty() {
@@ -17,10 +17,10 @@ fn calculate_solutions(
     }
 
     match characters[0] {
-        '.' => calculate_solutions(&characters[1..].to_vec(), integers, memoization),
+        '.' => calculate_solutions(&characters[1..], integers, memoization),
         '#' => calculate_hash_solutions(integers, characters, memoization),
         '?' => {
-            calculate_solutions(&characters[1..].to_vec(), integers, memoization)
+            calculate_solutions(&characters[1..], integers, memoization)
                 + calculate_hash_solutions(integers, characters, memoization)
         }
         _ => panic!(">.> WHAT DID YOU DO?"),
@@ -28,11 +28,11 @@ fn calculate_solutions(
 }
 
 fn calculate_hash_solutions(
-    integers: &Vec<u128>,
-    characters: &Vec<char>,
+    integers: &[u128],
+    characters: &[char],
     memoization: &mut HashMap<(Vec<u128>, Vec<char>), u128>,
 ) -> u128 {
-    if let Some(&result) = memoization.get(&(integers.clone(), characters.clone())) {
+    if let Some(&result) = memoization.get(&(integers.to_vec(), characters.to_vec())) {
         return result;
     }
 
@@ -44,8 +44,8 @@ fn calculate_hash_solutions(
     if characters.len() < x {
         return 0;
     }
-    for i in 0..x {
-        if characters[i] == '.' {
+    for c in &characters[..x] {
+        if *c == '.' {
             return 0;
         }
     }
@@ -58,12 +58,8 @@ fn calculate_hash_solutions(
     if characters[x] == '#' {
         return 0;
     }
-    let result = calculate_solutions(
-        &characters[(x + 1)..].to_vec(),
-        &integers[1..].to_vec(),
-        memoization,
-    );
-    memoization.insert((integers.clone(), characters.clone()), result);
+    let result = calculate_solutions(&characters[(x + 1)..], &integers[1..], memoization);
+    memoization.insert((integers.to_vec(), characters.to_vec()), result);
     result
 }
 
@@ -76,7 +72,7 @@ fn main() {
 
     for line in &lines {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        let springs = parts[0].chars().collect();
+        let springs = parts[0].chars().collect::<Vec<_>>();
         let groups: Vec<u128> = parts[1].split(',').map(|s| s.parse().unwrap()).collect();
         data_rows.push((springs, groups));
     }
